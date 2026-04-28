@@ -1,0 +1,326 @@
+<!-- =====================================================================
+  BUGSNAP — RECORDER PANEL
+  Adicione esta tab button junto das outras tabs no popup.html:
+  ====================================================================== -->
+
+<!-- 1. Tab button — adicionar junto dos outros .tab-btn -->
+<button class="tab-btn" data-tab="recorder">
+  ⏺ Gravar
+</button>
+
+
+<!-- =====================================================================
+  2. Tab panel — adicionar junto dos outros .tab-panel dentro de .content
+  ====================================================================== -->
+<div class="tab-panel" id="panel-recorder">
+
+  <!-- Estado + Timer -->
+  <div class="rec-header">
+    <div class="rec-indicator rec-indicator--idle" id="rec-indicator"></div>
+    <div class="rec-timer-wrap">
+      <span class="rec-timer" id="rec-timer">0:00</span>
+    </div>
+    <div class="rec-status" id="rec-status">
+      Clique em Iniciar para gravar a tela e capturar logs em tempo real.
+    </div>
+  </div>
+
+  <!-- Controles -->
+  <div class="rec-controls">
+    <button class="btn btn-record" id="rec-btn-start">
+      ⏺ Iniciar gravação
+    </button>
+    <button class="btn btn-stop" id="rec-btn-stop" disabled>
+      ⏹ Parar
+    </button>
+  </div>
+
+  <!-- Stats pós-gravação -->
+  <div class="rec-stats" id="rec-stats" style="display:none">
+    <div class="rec-stat">
+      <div class="rec-stat-label">Duração</div>
+      <div class="rec-stat-value" id="rec-duration">—</div>
+    </div>
+    <div class="rec-stat">
+      <div class="rec-stat-label">Tamanho</div>
+      <div class="rec-stat-value" id="rec-size">—</div>
+    </div>
+    <div class="rec-stat">
+      <div class="rec-stat-label">Logs</div>
+      <div class="rec-stat-value" id="rec-log-count">—</div>
+    </div>
+    <div class="rec-stat">
+      <div class="rec-stat-label">Requests</div>
+      <div class="rec-stat-value" id="rec-net-count">—</div>
+    </div>
+  </div>
+
+  <!-- Timeline de eventos -->
+  <div class="rec-timeline-wrap" id="rec-timeline"></div>
+
+  <!-- Preview do vídeo -->
+  <div class="rec-preview-wrap" id="rec-preview-wrap" style="display:none">
+    <video id="rec-preview" controls muted playsinline></video>
+  </div>
+
+  <!-- Exportar -->
+  <div class="rec-exports">
+    <button class="btn btn-secondary" id="rec-btn-dl-json" disabled>
+      Export JSON + logs
+    </button>
+    <button class="btn btn-primary" id="rec-btn-dl-video" disabled>
+      ↓ Baixar vídeo
+    </button>
+  </div>
+
+</div>
+
+
+<!-- =====================================================================
+  3. CSS — adicionar dentro do <style> do popup.html
+  ====================================================================== -->
+<style>
+  /* ── Recorder header ── */
+  .rec-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 16px 0 12px;
+    text-align: center;
+  }
+
+  /* Indicador de estado (bolinha animada) */
+  .rec-indicator {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--muted);
+    transition: background 0.3s;
+  }
+
+  .rec-indicator--idle {
+    background: var(--muted);
+  }
+
+  .rec-indicator--recording {
+    background: var(--accent);
+    box-shadow: 0 0 0 0 rgba(240, 77, 77, 0.6);
+    animation: rec-pulse 1.2s infinite;
+  }
+
+  .rec-indicator--done {
+    background: var(--ok);
+  }
+
+  @keyframes rec-pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(240, 77, 77, 0.6); }
+    70%  { box-shadow: 0 0 0 8px rgba(240, 77, 77, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(240, 77, 77, 0); }
+  }
+
+  .rec-timer-wrap {
+    line-height: 1;
+  }
+
+  .rec-timer {
+    font-family: var(--mono);
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -1px;
+  }
+
+  .rec-status {
+    font-size: 10px;
+    color: var(--muted);
+    max-width: 320px;
+    line-height: 1.5;
+  }
+
+  /* ── Controls ── */
+  .rec-controls {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .btn-record {
+    flex: 1;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .btn-record:hover:not(:disabled) { background: #d93c3c; }
+  .btn-record:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  .btn-stop {
+    flex: 1;
+    background: var(--bg3);
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .btn-stop:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+  .btn-stop:disabled { opacity: 0.35; cursor: not-allowed; }
+
+  /* ── Stats grid ── */
+  .rec-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    margin-bottom: 12px;
+  }
+
+  .rec-stat {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 7px 10px;
+    text-align: center;
+  }
+
+  .rec-stat-label {
+    font-size: 9px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 3px;
+  }
+
+  .rec-stat-value {
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  /* ── Timeline ── */
+  .rec-timeline-wrap {
+    margin-bottom: 12px;
+  }
+
+  .timeline-track {
+    position: relative;
+    height: 20px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    margin-bottom: 8px;
+    overflow: hidden;
+  }
+
+  .timeline-dot {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.1s;
+  }
+
+  .timeline-dot:hover { transform: translate(-50%, -50%) scale(1.8); }
+
+  .timeline-dot--error     { background: var(--accent); }
+  .timeline-dot--warn      { background: var(--warn); }
+  .timeline-dot--log       { background: var(--ok); opacity: 0.5; }
+  .timeline-dot--net-error { background: var(--accent); opacity: 0.7; }
+  .timeline-dot--net-ok    { background: var(--muted); opacity: 0.4; }
+
+  .timeline-empty {
+    text-align: center;
+    color: var(--muted);
+    font-size: 10px;
+    padding: 8px 0;
+  }
+
+  .timeline-events {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .timeline-event {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    font-size: 10px;
+    padding: 3px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .timeline-event:last-child { border-bottom: none; }
+
+  .tl-time {
+    flex-shrink: 0;
+    color: var(--muted);
+    font-size: 9px;
+    padding-top: 1px;
+    min-width: 30px;
+  }
+
+  .tl-label { color: var(--text); word-break: break-all; }
+
+  .timeline-event--error .tl-label     { color: var(--accent); }
+  .timeline-event--net-error .tl-label { color: var(--accent); }
+  .timeline-event--warn .tl-label      { color: var(--warn); }
+
+  /* ── Preview ── */
+  .rec-preview-wrap {
+    margin-bottom: 12px;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    overflow: hidden;
+    background: #000;
+  }
+
+  .rec-preview-wrap video {
+    width: 100%;
+    max-height: 200px;
+    display: block;
+  }
+
+  /* ── Exports ── */
+  .rec-exports {
+    display: flex;
+    gap: 8px;
+  }
+</style>
+
+
+<!-- =====================================================================
+  4. Script — adicionar ao final do popup.html (antes do </body>)
+     OU integrar ao main.js do seu popup existente
+  ====================================================================== -->
+<script type="module">
+  import { initRecorderPanel } from "./popup/recorder-panel.js";
+
+  // Função que retorna o tabId ativo — adaptar ao seu collect.js se necessário
+  async function getActiveTabId() {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    return tab?.id ?? null;
+  }
+
+  initRecorderPanel(getActiveTabId);
+</script>

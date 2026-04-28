@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BugSnap</title>
+  <link rel="stylesheet" href="css/popup.css" />
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">
+      <div class="logo-icon">🐛</div>
+      <div class="logo-text">Bug<span>Snap</span></div>
+    </div>
+    <div class="header-right">
+      <span class="status" id="status">Iniciando…</span>
+      <button class="btn-icon" id="btn-refresh" title="Atualizar">↻</button>
+    </div>
+  </div>
+
+  <!-- Input fields -->
+  <div class="inputs">
+    <div class="field">
+      <input id="bug-title" type="text" placeholder="Título do bug (ex: Botão de login não responde)" />
+    </div>
+    <div class="field">
+      <textarea id="bug-description" placeholder="Descreva o que aconteceu e os passos para reproduzir…"></textarea>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="info">Info</button>
+    <button class="tab-btn" data-tab="console">Console <span class="tab-count" id="console-count">0</span></button>
+    <button class="tab-btn" data-tab="network">Network <span class="tab-count" id="network-count">0</span></button>
+    <button class="tab-btn" data-tab="screenshot">Screenshot</button>
+    <button class="tab-btn" data-tab="recorder">Gravar</button>
+  </div>
+
+  <!-- Content -->
+  <div class="content">
+
+    <!-- Info panel -->
+    <div class="tab-panel active" id="panel-info">
+      <div class="card">
+        <div class="card-title">Página</div>
+        <div class="info-grid">
+          <div class="info-row" style="grid-column:1/-1">
+            <div class="info-label">URL</div>
+            <div class="info-value url-value" id="page-url">—</div>
+          </div>
+          <div class="info-row" style="grid-column:1/-1">
+            <div class="info-label">Título</div>
+            <div class="info-value" id="page-title">—</div>
+          </div>
+          <div class="info-row">
+            <div class="info-label">Capturado em</div>
+            <div class="info-value" id="page-time">—</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Sistema</div>
+        <div class="info-grid">
+          <div class="info-row">
+            <div class="info-label">Browser</div>
+            <div class="info-value" id="sys-browser">—</div>
+          </div>
+          <div class="info-row">
+            <div class="info-label">Plataforma</div>
+            <div class="info-value" id="sys-os">—</div>
+          </div>
+          <div class="info-row">
+            <div class="info-label">Resolução</div>
+            <div class="info-value" id="sys-screen">—</div>
+          </div>
+          <div class="info-row">
+            <div class="info-label">Viewport</div>
+            <div class="info-value" id="sys-viewport">—</div>
+          </div>
+          <div class="info-row">
+            <div class="info-label">Conexão</div>
+            <div class="info-value" id="sys-connection">—</div>
+          </div>
+          <div class="info-row">
+            <div class="info-label">Idioma</div>
+            <div class="info-value" id="sys-lang">—</div>
+          </div>
+        </div>
+        <div class="perf-label" style="margin-top:10px">Performance</div>
+        <div class="perf-row" id="sys-perf">—</div>
+      </div>
+    </div>
+
+    <!-- Console panel -->
+    <div class="tab-panel" id="panel-console">
+      <div class="debug-toolbar">
+        <input class="debug-search" id="console-search" type="text" placeholder="Buscar texto no console" />
+        <select class="debug-select" id="console-filter">
+          <option value="all">Todos</option>
+          <option value="error">Erros</option>
+          <option value="warning">Warnings</option>
+          <option value="info">Info</option>
+          <option value="debug">Debug</option>
+          <option value="trace">Trace</option>
+          <option value="other">Outros</option>
+        </select>
+        <button class="debug-btn" id="btn-clear-console" type="button">Limpar dados</button>
+      </div>
+      <div class="debug-summary" id="console-summary"></div>
+      <div class="debug-diagnostics" id="console-diagnostics"></div>
+      <div id="console-list">
+        <div class="empty-state">Coletando logs…</div>
+      </div>
+    </div>
+
+    <!-- Network panel -->
+    <div class="tab-panel" id="panel-network">
+      <div class="debug-toolbar">
+        <input class="debug-search" id="network-search" type="text" placeholder="Buscar URL, metodo ou status" />
+        <select class="debug-select" id="network-filter">
+          <option value="all">Todos</option>
+          <option value="failed">Falhas</option>
+          <option value="4xx">4xx</option>
+          <option value="5xx">5xx</option>
+          <option value="xhr">XHR</option>
+          <option value="fetch">Fetch</option>
+        </select>
+        <button class="debug-btn" id="btn-clear-network" type="button">Limpar dados</button>
+      </div>
+      <div class="debug-summary" id="network-summary"></div>
+      <div class="debug-diagnostics" id="network-diagnostics"></div>
+      <div id="network-list">
+        <div class="empty-state">Coletando requisições…</div>
+      </div>
+    </div>
+
+    <!-- Screenshot panel -->
+    <div class="tab-panel" id="panel-screenshot">
+      <div class="screenshot-wrap">
+        <div class="screenshot-toolbar">
+          <div class="tool-group">
+            <button class="tool-btn active" id="tool-pen" type="button">Caneta</button>
+            <button class="tool-btn" id="tool-rect" type="button">Caixa</button>
+            <button class="tool-btn" id="tool-undo" type="button">Desfazer</button>
+            <button class="tool-btn" id="tool-clear" type="button">Limpar</button>
+          </div>
+          <div class="color-group">
+            <button class="color-btn active" id="color-red" type="button" title="Vermelho" style="background:#f04d4d"></button>
+            <button class="color-btn" id="color-yellow" type="button" title="Amarelo" style="background:#f5c842"></button>
+            <button class="color-btn" id="color-green" type="button" title="Verde" style="background:#3dd68c"></button>
+            <button class="color-btn" id="color-blue" type="button" title="Azul" style="background:#55b9ff"></button>
+          </div>
+        </div>
+        <div class="screenshot-stage">
+          <div id="screenshot-placeholder">
+            <div style="font-size:24px;margin-bottom:8px">📸</div>
+            <div>Capturando screenshot…</div>
+          </div>
+          <img id="screenshot-img" alt="Screenshot da página" />
+          <canvas id="annotation-canvas"></canvas>
+        </div>
+        <div class="annotation-hint">Desenhe direto na imagem. As anotações entram no export JSON e no preview do screenshot.</div>
+      </div>
+    </div>
+
+    <div class="tab-panel" id="panel-recorder">
+      <div class="rec-header">
+        <div class="rec-indicator rec-indicator--idle" id="rec-indicator"></div>
+        <div class="rec-timer-wrap">
+          <span class="rec-timer" id="rec-timer">0:00</span>
+        </div>
+        <div class="rec-status" id="rec-status">
+          Clique em Iniciar para gravar a tela e capturar logs em tempo real.
+        </div>
+      </div>
+
+      <div class="rec-controls">
+        <button class="btn btn-record" id="rec-btn-start">
+          ⏺ Iniciar gravação
+        </button>
+        <button class="btn btn-secondary" id="rec-btn-stop" disabled style="flex:1">
+          ⏹ Parar
+        </button>
+      </div>
+
+      <div class="rec-stats" id="rec-stats" style="display:none">
+        <div class="rec-stat">
+          <div class="rec-stat-label">Duração</div>
+          <div class="rec-stat-value" id="rec-duration">—</div>
+        </div>
+        <div class="rec-stat">
+          <div class="rec-stat-label">Tamanho</div>
+          <div class="rec-stat-value" id="rec-size">—</div>
+        </div>
+        <div class="rec-stat">
+          <div class="rec-stat-label">Logs</div>
+          <div class="rec-stat-value" id="rec-log-count">—</div>
+        </div>
+        <div class="rec-stat">
+          <div class="rec-stat-label">Requests</div>
+          <div class="rec-stat-value" id="rec-net-count">—</div>
+        </div>
+        <div class="rec-stat">
+          <div class="rec-stat-label">Falhas</div>
+          <div class="rec-stat-value" id="rec-fail-count">—</div>
+        </div>
+      </div>
+
+      <div class="rec-timeline-wrap" id="rec-timeline"></div>
+
+      <div class="rec-preview-wrap" id="rec-preview-wrap" style="display:none">
+        <video id="rec-preview" controls muted playsinline></video>
+      </div>
+
+      <div class="rec-exports">
+        <button class="btn btn-secondary" id="rec-btn-dl-json" disabled>
+          JSON + logs
+        </button>
+        <button class="btn btn-primary" id="rec-btn-dl-video" disabled>
+          ↓ Baixar vídeo
+        </button>
+      </div>
+
+      <div id="rec-diagnostics"></div>
+    </div>
+
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <button class="btn btn-secondary" id="btn-copy" disabled>Copiar resumo</button>
+    <button class="btn btn-secondary" id="btn-link" disabled>Copiar link</button>
+    <button class="btn btn-secondary" id="btn-md" disabled>Export .md</button>
+    <button class="btn btn-primary" id="btn-json" disabled>Export JSON</button>
+  </div>
+
+  </div>
+
+  <script type="module" src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BugSnap Recorder</title>
+  <style>
+    :root {
+      --bg: #0d0d0f;
+      --bg2: #141418;
+      --bg3: #1c1c22;
+      --border: #2a2a35;
+      --accent: #f04d4d;
+      --warn: #f5c842;
+      --ok: #3dd68c;
+      --text: #e8e8f0;
+      --muted: #6b6b80;
+      --mono: "JetBrains Mono", monospace;
+      --display: "Syne", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+
+    .shell {
+      min-height: 100vh;
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+
+    .header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg2);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-mark {
+      width: 30px;
+      height: 30px;
+      border-radius: 7px;
+      display: grid;
+      place-items: center;
+      background: var(--accent);
+      color: white;
+      font-size: 15px;
+    }
+
+    .brand-copy {
+      display: grid;
+      gap: 2px;
+    }
+
+    .brand-name {
+      font-family: var(--display);
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    .brand-sub {
+      color: var(--muted);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .workspace {
+      padding: 20px;
+      display: grid;
+      gap: 16px;
+      max-width: 980px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .panel {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+    }
+
+    .rec-header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
+    .rec-indicator {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--muted);
+      transition: background 0.3s;
+    }
+
+    .rec-indicator--idle,
+    .rec-indicator--error {
+      background: var(--muted);
+    }
+
+    .rec-indicator--recording,
+    .rec-indicator--stopping {
+      background: var(--accent);
+      box-shadow: 0 0 0 0 rgba(240, 77, 77, 0.6);
+      animation: rec-pulse 1.2s infinite;
+    }
+
+    .rec-indicator--done {
+      background: var(--ok);
+    }
+
+    @keyframes rec-pulse {
+      0% { box-shadow: 0 0 0 0 rgba(240, 77, 77, 0.6); }
+      70% { box-shadow: 0 0 0 10px rgba(240, 77, 77, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(240, 77, 77, 0); }
+    }
+
+    .rec-timer {
+      font-size: 40px;
+      line-height: 1;
+      font-weight: 800;
+      color: var(--text);
+    }
+
+    .rec-status {
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.6;
+      max-width: 520px;
+    }
+
+    .rec-controls,
+    .rec-exports {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      min-height: 40px;
+      padding: 0 14px;
+      border-radius: 7px;
+      border: 1px solid var(--border);
+      background: var(--bg3);
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    .btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      border: none;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: #d93c3c;
+    }
+
+    .btn-stop:hover:not(:disabled),
+    .btn-secondary:hover:not(:disabled) {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .rec-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+      gap: 8px;
+    }
+
+    .rec-stat {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 10px;
+      text-align: center;
+    }
+
+    .rec-stat-label {
+      color: var(--muted);
+      font-size: 10px;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    .rec-stat-value {
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .rec-diagnostics {
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.5;
+      padding: 10px 12px;
+      border: 1px dashed var(--border);
+      border-radius: 7px;
+      display: none;
+    }
+
+    .timeline-track {
+      position: relative;
+      height: 24px;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+
+    .timeline-dot {
+      position: absolute;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+
+    .timeline-dot--error,
+    .timeline-dot--net-error {
+      background: var(--accent);
+    }
+
+    .timeline-dot--warn {
+      background: var(--warn);
+    }
+
+    .timeline-dot--log {
+      background: var(--ok);
+      opacity: 0.5;
+    }
+
+    .timeline-dot--net-ok {
+      background: var(--muted);
+      opacity: 0.45;
+    }
+
+    .timeline-empty {
+      text-align: center;
+      color: var(--muted);
+      font-size: 11px;
+      padding: 12px 0;
+    }
+
+    .timeline-events {
+      display: grid;
+      gap: 4px;
+    }
+
+    .timeline-event {
+      display: flex;
+      gap: 8px;
+      font-size: 11px;
+      padding: 4px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .timeline-event:last-child {
+      border-bottom: none;
+    }
+
+    .tl-time {
+      color: var(--muted);
+      min-width: 36px;
+      flex-shrink: 0;
+    }
+
+    .tl-label {
+      word-break: break-word;
+    }
+
+    .timeline-event--error .tl-label,
+    .timeline-event--net-error .tl-label {
+      color: var(--accent);
+    }
+
+    .timeline-event--warn .tl-label {
+      color: var(--warn);
+    }
+
+    .rec-preview-wrap {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      background: #000;
+      display: none;
+    }
+
+    .rec-preview-wrap video {
+      width: 100%;
+      display: block;
+      max-height: 420px;
+      background: #000;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="header">
+      <div class="brand">
+        <div class="brand-mark">⏺</div>
+        <div class="brand-copy">
+          <div class="brand-name">BugSnap Recorder</div>
+          <div class="brand-sub">Video local + console + network sincronizados</div>
+        </div>
+      </div>
+    </div>
+
+    <main class="workspace">
+      <section class="panel">
+        <div class="rec-header">
+          <div class="rec-indicator rec-indicator--idle" id="rec-indicator"></div>
+          <div class="rec-timer" id="rec-timer">0:00</div>
+          <div class="rec-status" id="rec-status">
+            Clique em iniciar, escolha a aba atual no dialogo do Chrome e reproduza o bug enquanto o BugSnap sincroniza video, console e network.
+          </div>
+        </div>
+
+        <div class="rec-controls">
+          <button class="btn btn-primary" id="rec-btn-start" type="button">Iniciar gravacao</button>
+          <button class="btn btn-stop" id="rec-btn-stop" type="button" disabled>Parar</button>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="rec-stats" id="rec-stats" style="display:none">
+          <div class="rec-stat">
+            <div class="rec-stat-label">Duracao</div>
+            <div class="rec-stat-value" id="rec-duration">—</div>
+          </div>
+          <div class="rec-stat">
+            <div class="rec-stat-label">Tamanho</div>
+            <div class="rec-stat-value" id="rec-size">—</div>
+          </div>
+          <div class="rec-stat">
+            <div class="rec-stat-label">Logs</div>
+            <div class="rec-stat-value" id="rec-log-count">—</div>
+          </div>
+          <div class="rec-stat">
+            <div class="rec-stat-label">Requests</div>
+            <div class="rec-stat-value" id="rec-net-count">—</div>
+          </div>
+          <div class="rec-stat">
+            <div class="rec-stat-label">Falhas</div>
+            <div class="rec-stat-value" id="rec-fail-count">—</div>
+          </div>
+        </div>
+
+        <div class="rec-diagnostics" id="rec-diagnostics"></div>
+      </section>
+
+      <section class="panel">
+        <div id="rec-timeline"></div>
+      </section>
+
+      <section class="panel rec-preview-wrap" id="rec-preview-wrap">
+        <video id="rec-preview" controls muted playsinline></video>
+      </section>
+
+      <section class="panel">
+        <div class="rec-exports">
+          <button class="btn btn-secondary" id="rec-btn-dl-json" type="button" disabled>Baixar JSON da sessao</button>
+          <button class="btn btn-primary" id="rec-btn-dl-video" type="button" disabled>Baixar video</button>
+        </div>
+      </section>
+
+      <section class="hint">
+        O Chrome sempre mostra o seletor de compartilhamento. Escolha a aba desejada e clique em Compartilhar para iniciar a gravacao.
+      </section>
+    </main>
+  </div>
+
+  <script type="module" src="window.js"></script>
+</body>
+</html>
