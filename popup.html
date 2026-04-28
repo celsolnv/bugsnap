@@ -7,6 +7,52 @@
   <link rel="stylesheet" href="css/popup.css" />
 </head>
 <body>
+  <!-- Jam Menu View -->
+  <div id="menu-view">
+    <div class="menu-header">
+      <div class="jam-logo">BugSnap<span>🍓</span></div>
+      <div class="menu-icons">
+        <button class="jam-icon-btn">🏠</button>
+        <button class="jam-icon-btn">⋯</button>
+      </div>
+    </div>
+    <div class="menu-actions">
+      <button class="menu-btn" id="jam-btn-screenshot">
+        <div class="menu-btn-content">
+          <span class="menu-btn-icon">📷</span>
+          Capturar Tela
+        </div>
+        <span class="menu-btn-chevron">›</span>
+      </button>
+      <button class="menu-btn" id="jam-btn-record">
+        <div class="menu-btn-content">
+          <span class="menu-btn-icon">🎞️</span>
+          Gravar Tela
+        </div>
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div class="mic-toggle">🎙️ Ligado</div>
+          <span class="menu-btn-chevron">›</span>
+        </div>
+      </button>
+      <button class="menu-btn" disabled>
+        <div class="menu-btn-content">
+          <span class="menu-btn-icon">⏪</span>
+          Compartilhar Últimos 60s
+        </div>
+        <span style="font-size:12px; background:#f4f4f5; padding:4px 10px; border-radius:8px;">Em Breve</span>
+      </button>
+      <hr style="border: 0; border-top: 1px solid #e4e4e7; margin: 8px 0;" />
+      <button class="menu-btn" disabled>
+        <div class="menu-btn-content">
+          <span class="menu-btn-icon">🔗</span>
+          Solicitar Gravação
+        </div>
+        <span class="menu-btn-chevron">?</span>
+      </button>
+    </div>
+  </div>
+
+  <div id="editor-view" style="display: none; height: 100%; flex-direction: column;">
 
   <!-- Header -->
   <div class="header">
@@ -239,6 +285,8 @@
   </div>
 
   </div>
+
+  </div> <!-- Close editor-view -->
 
   <script type="module" src="popup.js"></script>
 </body>

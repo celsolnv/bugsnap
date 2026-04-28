@@ -81,8 +81,9 @@ export function initRecorderPanel(getTabId) {
       return;
     }
 
-    setStatusText("Aguardando permissão de gravação...");
-    await Recorder.start(tabId);
+    setStatusText("Iniciando gravação na página...");
+    chrome.tabs.sendMessage(tabId, { type: "START_RECORDING" });
+    setTimeout(() => window.close(), 100);
   });
 
   btnStop.addEventListener("click", () => {

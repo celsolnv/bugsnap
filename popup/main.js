@@ -130,10 +130,24 @@ async function startApp(action) {
   if (action === "screenshot") {
     await doCollect();
   } else if (action === "record") {
-    // Navigate to recorder tab and auto start
-    const recorderTab = document.querySelector('.tab-btn[data-tab="recorder"]');
-    if (recorderTab) recorderTab.click();
-    document.getElementById("rec-btn-start").click();
+    // Send message to the injected content script on the page to spawn the picker + toolbar natively
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (tab?.id) {
+      try {
+        await chrome.tabs.sendMessage(tab.id, { type: "START_RECORDING" });
+        setTimeout(() => window.close(), 100);
+      } catch (err) {
+        try {
+          // If content script was disconnected due to extension update/reload without page refresh, inject it dynamically.
+          await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ["core/content.js"] });
+          await new Promise(r => setTimeout(r, 150));
+          await chrome.tabs.sendMessage(tab.id, { type: "START_RECORDING" });
+          setTimeout(() => window.close(), 100);
+        } catch (injectionErr) {
+          alert("Ops! Por favor faça um Refresh (F5) na página e tente gravar novamente.");
+        }
+      }
+    }
   }
 }
 
