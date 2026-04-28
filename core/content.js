@@ -60,8 +60,14 @@
       }
 
       const displayStream = await navigator.mediaDevices.getDisplayMedia({
-        video: { frameRate: { ideal: 30, max: 30 }, width: { ideal: 1920 }, height: { ideal: 1080 } },
+        video: { 
+          frameRate: { ideal: 30, max: 30 }, 
+          width: { ideal: 1920 }, 
+          height: { ideal: 1080 } 
+        },
         audio: true,
+        selfBrowserSurface: "include",
+        surfaceSwitching: "include"
       });
 
       if (!displayStream) return;
@@ -125,14 +131,14 @@
       };
 
       mediaRecorder.start(1000);
-      startTime = Date.now();
+      let elapsedMs = 0;
       isPaused = false;
       injectToolbar();
       
       timerInterval = setInterval(() => {
         if (!isPaused && toolbarEl) {
-          const elapsed = Date.now() - startTime;
-          const secs = Math.floor(elapsed / 1000);
+          elapsedMs += 500;
+          const secs = Math.floor(elapsedMs / 1000);
           const mins = Math.floor(secs / 60);
           const remain = String(secs % 60).padStart(2, "0");
           const timeStr = `${mins}:${remain}`;
@@ -234,14 +240,20 @@
     
     document.body.appendChild(toolbarEl);
 
-    toolbarEl.querySelector(".bs-btn-pause").addEventListener("click", () => {
+    const pauseBtn = toolbarEl.querySelector(".bs-btn-pause");
+    const sgvPause = `<svg viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>`;
+    const sgvPlay = `<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>`;
+    
+    pauseBtn.addEventListener("click", () => {
       if (!mediaRecorder) return;
       if (isPaused) {
         mediaRecorder.resume();
         toolbarEl.querySelector(".bs-dot").style.animationPlayState = "running";
+        pauseBtn.innerHTML = sgvPause;
       } else {
         mediaRecorder.pause();
         toolbarEl.querySelector(".bs-dot").style.animationPlayState = "paused";
+        pauseBtn.innerHTML = sgvPlay;
       }
       isPaused = !isPaused;
     });
