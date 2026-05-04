@@ -253,16 +253,16 @@ Ja implementado:
 
 As anotacoes entram no export `JSON`.
 
-### 5. Gravação de Tela
+### 5. Gravação de Tela (Floating Toolbar)
 
-Já implementado na aba `Gravar`:
+Já implementado usando injeção nativa na página:
 
-- Início e fim de gravação de tela (via Chrome Tab Picker)
-- Captura de áudio do microfone (opcional se habilitado)
-- Timer em tempo real e indicador de estado
-- Preview do vídeo após o término
-- Exportação do vídeo em formato `.webm` ou `.mp4`
-- Exportação de dados de sessão (`JSON`) sincronizados com o período da gravação
+- Início da gravação via menu inicial moderno (estilo Jam).
+- Injeção de uma **Toolbar Flutuante** (Pílula Preta) na página, contornando limitações do popup do Chrome.
+- Captura de áudio do microfone e da guia com botões de Pausar e Mute interativos na pílula.
+- Timer com "Time Freeze" (acuidade ao pausar a gravação).
+- Bypass do `Chrome Tab Picker` para permitir a seleção da aba atual (`selfBrowserSurface: "include"`).
+- **Double-Download Automático**: Ao parar a gravação na toolbar, exportação simultânea do vídeo `.webm` e dos dados de sessão (`.json` sincronizado com logs + network).
 
 ### 5. Exports
 
